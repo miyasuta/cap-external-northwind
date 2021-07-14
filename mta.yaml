@@ -1,0 +1,56 @@
+## Generated mta.yaml based on template version 0.4.0
+## appName = northwind
+## language=nodejs; multitenant=false
+## approuter=
+_schema-version: '3.1'
+ID: northwind
+version: 1.0.0
+description: "A simple CAP project."
+parameters:
+  enable-parallel-deployments: true
+   
+build-parameters:
+  before-all:
+   - builder: custom
+     commands:
+      - npm install --production
+      - npx -p @sap/cds-dk cds build --production
+
+modules:
+ # --------------------- SERVER MODULE ------------------------
+ - name: northwind-srv
+ # ------------------------------------------------------------
+   type: nodejs
+   path: gen/srv
+   parameters:
+     memory: 256M
+     disk-quota: 1024M   
+   provides:
+    - name: srv-api      # required by consumers of CAP services (e.g. approuter)
+      properties:
+        srv-url: ${default-url}
+   properties:
+     EXIT: 1  # required by deploy.js task to terminate 
+   requires:
+    - name: northwind-destination
+    - name: northwind-uaa
+
+resources:
+ - name: northwind-destination
+   type: org.cloudfoundry.managed-service
+   parameters:
+     service-plan: lite
+     service: destination     
+
+ - name: northwind-uaa
+   type: org.cloudfoundry.managed-service
+   parameters:
+     path: ./xs-security.json
+     service: xsuaa
+     service-plan: application  
+   
+
+
+
+
+
